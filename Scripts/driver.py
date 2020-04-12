@@ -8,27 +8,38 @@ from mmml.config import base_data_path
 
 from data_prep import fnDataPrep
 from split_data import fnSplitData
-from feature_processing import fnEngineerFeatures
+from feature_processing import fnScaleFeatures
 from train import fnTrain
-from score import fnScore
+from score import fnScore, fnEvaluate, fnGetBracket
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
 logging.info("###################### ENTERING DATA PREP ######################")
-model_data = fnDataPrep(base_data_path, save=True)
+x_features, base = fnDataPrep(base_data_path, save=True)
 
 logging.info("###################### ENTERING TEST/TRAIN SPLIT ######################")
-model_data_dev, model_data_oot = fnSplitData(model_data, save=True)
+x_features_dev, x_features_oot = fnSplitData(x_features, save='x_features')
+base_dev, base_oot = fnSplitData(base, save='base')
 
-print(list(model_data_dev))
 logging.info("###################### ENTERING FEATURE PROCESSING ######################")
-processed_model_data_dev, column_dict, fitted_scaler = fnEngineerFeatures(model_data_dev, save='processed_model_data_dev')
-processed_model_data_oot, _, _ = fnEngineerFeatures(model_data_oot, fitted_scaler, save='processed_model_data_oot')
+scaled_x_features_dev, fitted_scaler = fnScaleFeatures(x_features_dev, save='scaled_x_features_dev')
+scaled_x_features_oot, _ = fnScaleFeatures(x_features_oot, fitted_scaler, save='scaled_x_features_oot')
 
 logging.info("###################### ENTERING MODEL TRAINING ######################")
-clf, mean, std = fnTrain(processed_model_data_dev, column_dict, seed=96, save='xgboost_regression')
+model = fnTrain(base_dev, scaled_x_features_dev, seed=96, save='xgboost_regression_reverse')
 
 logging.info("###################### ENTERING MODEL SCORING ######################")
 #y_pred = fnScore(processed_model_data_oot, column_dict, clf, mean, std)
+_, results_df_chalk = fnScore(base_oot, scaled_x_features_oot, scorer='chalk')
+_, results_df_model = fnScore(base_oot, scaled_x_features_oot, scorer=model)
+
+logging.info("Evaluating chalk predictions: (Year: Overall Accuracy, ESPN Bracket Pts)")
+fnEvaluate(results_df_chalk)
+
+logging.info("Evaluating model predictions: (Year: Overall Accuracy, ESPN Bracket Pts)")
+fnEvaluate(results_df_model)
+
+bracket = fnGetBracket(results_df_model.query('Season==2019'), save='2019_bracket_predictions')
+print(bracket.head())
 
 logging.info("done")

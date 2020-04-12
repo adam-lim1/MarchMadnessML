@@ -39,6 +39,9 @@ def fnDataPrep(base_data_path, save=False):
     x_features = season_stats.merge(elo, left_index=True, right_index=True)\
                             .merge(massey_final, left_index=True, right_index=True)
 
+    # ToDo - Improve saving process
+    x_features.to_pickle('{}/Data/Processed/x_features.pkl'.format(os.path.dirname(os.getcwd())))
+
     logging.info("Creating base of past tournament games...")
     t_results_df = pd.read_csv('{}/MNCAATourneyDetailedResults.csv'.format(base_data_path))
     t_results = gameResults(t_results_df)
@@ -59,22 +62,11 @@ def fnDataPrep(base_data_path, save=False):
     slots_simple.drop('LateDayNum', axis=1, inplace=True)
     slots_simple = slots_simple.set_index(['Seed', 'GameRound'])
 
-    logging.info("Merging tournament games base to independent features...")
-    # model_data = base.merge(x_features, left_on=['HTeamID', 'Season'], right_index=True)\
-    #                 .merge(x_features, left_on=['ATeamID', 'Season'], right_index=True, suffixes=['_H', '_A'])\
-    #                 .merge(t_seeds, left_on=['HTeamID', 'Season'], right_index=True)\
-    #                 .merge(t_seeds, left_on=['ATeamID', 'Season'], right_index=True, suffixes=['_H', '_A'])
+    base = base.merge(t_seeds, left_on=['HTeamID', 'Season'], right_index=True, how='left')\
+                .merge(t_seeds, left_on=['ATeamID', 'Season'], right_index=True, how='left', suffixes=['_H', '_A'])\
+                .merge(slots_simple, left_on=['Seed_H', 'GameRound'], right_index=True)
 
-    model_data = base.merge(t_seeds, left_on=['HTeamID', 'Season'], right_index=True)\
-                    .merge(t_seeds, left_on=['ATeamID', 'Season'], right_index=True, suffixes=['_H', '_A'])\
-                    .merge(slots_simple, left_on=['Seed_H', 'GameRound'], right_index=True)\
-                    .merge(x_features, left_on=['HTeamID', 'Season'], right_index=True)\
-                    .merge(x_features, left_on=['ATeamID', 'Season'], right_index=True, suffixes=['_H', '_A'])
+    # ToDo - Improve saving process
+    base.to_pickle('{}/Data/Processed/base.pkl'.format(os.path.dirname(os.getcwd())))
 
-    logging.info("Model data created")
-
-    if save != False:
-        model_data.to_pickle('{}/Data/Processed/model_data.pkl'.format(os.path.dirname(os.getcwd())))
-        logging.info("Model data saved to: {}/Data/Processed/model_data.pkl".format(os.path.dirname(os.getcwd())))
-
-    return model_data
+    return x_features, base
