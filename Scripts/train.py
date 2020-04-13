@@ -102,8 +102,8 @@ def fnTrain(base, x_features, seed=96, save=False):
     # Define Normal Distribution Parameters
     model = {}
     model['clf'] = clf
-    model['mean'] = model_data_all[columns_key['target']].mean().get_values()[0]
-    model['std'] = model_data_all[columns_key['target']].std().get_values()[0]
+    model['mean'] = model_data_all[columns_key['target']].mean()
+    model['std'] = model_data_all[columns_key['target']].std()
 
     # Save to Pickle
     if save != False:

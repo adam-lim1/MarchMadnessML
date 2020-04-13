@@ -22,7 +22,7 @@ def fnSplitData(data_all, save=False):
     try:
         dev_years = list(set(data_all['Season'].unique()) - set(oot_years))
     except:
-        dev_years = list(set([x[1] for x in data_all.index.get_values()]) - set(oot_years))
+        dev_years = list(set([x[1] for x in data_all.index.to_numpy()]) - set(oot_years))
 
     dev_years.sort()
     logging.info("Dev seasons: {}".format(dev_years))

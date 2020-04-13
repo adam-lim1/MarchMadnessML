@@ -10,7 +10,7 @@ from mmml.config import base_data_path
 from mmml.game_results import *
 from mmml.utils import *
 
-logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
+#logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
 def fnScaleFeatures(x_features, scaler=None, save=False):
     """
