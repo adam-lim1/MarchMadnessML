@@ -29,8 +29,7 @@ logging.info("###################### ENTERING MODEL TRAINING ###################
 model = fnTrain(base_dev, scaled_x_features_dev, seed=96, save='xgboost_regression_reverse')
 
 logging.info("###################### ENTERING MODEL SCORING ######################")
-#y_pred = fnScore(processed_model_data_oot, column_dict, clf, mean, std)
-_, results_df_chalk = fnScore(base_oot, scaled_x_features_oot, scorer='chalk')
+_, results_df_chalk = fnScore(base_oot, scaled_x_features_oot, scorer='chalk', seed=42)
 _, results_df_model = fnScore(base_oot, scaled_x_features_oot, scorer=model)
 
 logging.info("Evaluating chalk predictions: (Year: Overall Accuracy, ESPN Bracket Pts)")

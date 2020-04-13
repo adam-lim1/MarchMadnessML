@@ -65,7 +65,7 @@ def model_predictions(df, model, features):
 
     return y_pred
 
-def score_round(matchups_r1, x_features, columns_key, scorer='chalk'):
+def score_round(matchups_r1, x_features, columns_key, scorer='chalk', seed=42):
     """
     Score matchups for round n and create matchups for round n+1
     """
@@ -74,7 +74,7 @@ def score_round(matchups_r1, x_features, columns_key, scorer='chalk'):
 
     # Score round matchups
     if scorer=='chalk':
-        predictions = chalk_predictions(df=score_r1)
+        predictions = chalk_predictions(df=score_r1, seed=seed)
     else:
         predictions = model_predictions(df=score_r1, model=scorer, features=columns_key['features']) # ToDo - pass features?
 
@@ -112,7 +112,7 @@ def score_round(matchups_r1, x_features, columns_key, scorer='chalk'):
 
     return base_r2, pred_r1
 
-def fnScore(base, x_features, scorer='chalk'):
+def fnScore(base, x_features, scorer='chalk', seed=42):
     """
     docstring
     """
@@ -174,7 +174,15 @@ def fnEvaluate(results_df):
     for year in year_list:
         acc = results_df.query('Season=={}'.format(year))['Correct'].sum() / results_df.query('Season=={}'.format(year))['Correct'].count()
         pts = results_df.query('Season=={}'.format(year))['Points'].sum()
+
+        by_round_correct = results_df.query('Season=={}'.format(year)).groupby('GameRound').sum()['Correct']
+        by_round_total = results_df.query('Season=={}'.format(year)).groupby('GameRound').count()['Correct']
+        by_round_pts = results_df.query('Season=={}'.format(year)).groupby('GameRound').sum()['Points']
+        by_round_results = pd.DataFrame(by_round_pts).merge(pd.DataFrame(by_round_correct / by_round_total), left_index=True, right_index=True).transpose()
+
         print("{year}: {acc}, {pts}".format(year=year, acc=acc, pts=pts))
+        print("")
+        print(by_round_results)
 
 def fnGetBracket(results_df, save):
     teams = pd.read_csv('{}/MTeams.csv'.format(base_data_path))
