@@ -4,9 +4,9 @@ import os
 import logging
 
 sys.path.append('{}/mmml'.format(os.path.dirname(os.getcwd())))
-from mmml.config import base_data_path
-from mmml.config import oot_years
+from mmml.config import data_folder, oot_years
 from mmml.game_results import *
+from mmml.utils import *
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
@@ -16,6 +16,7 @@ def fnSplitData(data_all, save=False):
     :param save: bool, default=False.
     :return: DataFrame, DataFrame
     """
+
     logging.info("Splitting data into Development and OOT sets...")
 
     # GET LIST OF YEARS TO USE AS DEV
@@ -30,10 +31,8 @@ def fnSplitData(data_all, save=False):
     logging.info("Dev model data: {} obs".format(data_dev.shape[0]))
 
     # Save to Pickle
-    data_dev.to_pickle('{}/Data/Processed/{}_dev.pkl'.format(os.path.dirname(os.getcwd()), save))
-    # if save != False:
-    #     model_data_dev.to_pickle('{}/Data/Processed/model_data_dev.pkl'.format(os.path.dirname(os.getcwd())))
-    #     logging.info("Dev data saved to: {}/Data/Processed/model_data_dev.pkl".format(os.path.dirname(os.getcwd())))
+    if save != False:
+        saveResults(object=data_dev, dir='Data/Processed', file_name="{}_dev.pkl".format(save))
 
     # GET LIST OF YEARS TO USE AS OOT
     oot_years.sort()
@@ -42,9 +41,7 @@ def fnSplitData(data_all, save=False):
     logging.info("OOT model data: {} obs".format(data_oot.shape[0]))
 
     # Save to Pickle
-    data_oot.to_pickle('{}/Data/Processed/{}_oot.pkl'.format(os.path.dirname(os.getcwd()), save))
-    # if save != False:
-    #     model_data_oot.to_pickle('{}/Data/Processed/model_data_oot.pkl'.format(os.path.dirname(os.getcwd())))
-    #     logging.info("OOT data saved to: {}/Data/Processed/model_data_oot.pkl".format(os.path.dirname(os.getcwd())))
+    if save != False:
+        saveResults(object=data_oot, dir='Data/Processed', file_name="{}_oot.pkl".format(save))
 
     return data_dev, data_oot

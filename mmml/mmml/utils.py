@@ -1,5 +1,27 @@
 import pandas as pd
 import logging
+import os
+import pickle
+
+def saveResults(object, dir, file_name):
+    base_path = os.path.dirname(os.getcwd())
+
+    print(os.path.join(base_path, dir, file_name))
+
+    # Create directory if doesn't exist
+    if not os.path.exists(os.path.join(base_path, dir)):
+        logging.info("Creating directory: {}".format(os.path.join(base_path, dir)))
+        os.makedirs(os.path.join(base_path, dir))
+
+    if isinstance(object, pd.DataFrame):
+        logging.info("Writing object to Pickle: {}".format(os.path.join(base_path, dir, file_name)))
+        object.to_pickle(os.path.join(base_path, dir, file_name))
+    else:
+        logging.info("Writing object to Pickle: {}".format(os.path.join(base_path, dir, file_name)))
+        with open(os.path.join(base_path, dir, file_name), 'wb') as file:
+            pickle.dump(object, file)
+
+    return 1
 
 def getFeatureDict(feature_list):
     #feature_list = pd.read_csv('{}/mmml/mmml/feature_list2.csv'.format(os.path.dirname(os.getcwd())))

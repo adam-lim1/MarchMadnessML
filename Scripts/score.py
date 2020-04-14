@@ -8,7 +8,7 @@ import pickle
 from scipy.stats import norm
 
 sys.path.append('{}/mmml'.format(os.path.dirname(os.getcwd())))
-from mmml.config import base_data_path
+from mmml.config import data_folder
 from mmml.game_results import *
 from mmml.utils import *
 
@@ -69,6 +69,7 @@ def score_round(matchups_r1, x_features, columns_key, scorer='chalk', seed=42):
     """
     Score matchups for round n and create matchups for round n+1
     """
+    base_path = os.path.dirname(os.getcwd())
     # Merge Current Round Matchups with X_Features
     score_r1 = createModelData(base=matchups_r1, x_features=x_features, columns_key=columns_key)
 
@@ -86,7 +87,7 @@ def score_round(matchups_r1, x_features, columns_key, scorer='chalk', seed=42):
     pred_r1['WSeed_pred'] = np.where(pred_r1['Pred']==1, pred_r1['Seed_H'], pred_r1['Seed_A'])
 
     # Get Slots
-    slots_simple = pd.read_csv('{}/MNCAATourneySeedRoundSlots.csv'.format(base_data_path))
+    slots_simple = pd.read_csv('{}/Data/Raw/{}/MDataFiles_Stage1/MNCAATourneySeedRoundSlots.csv'.format(base_path, data_folder))
     slots_simple.drop('EarlyDayNum', axis=1, inplace=True)
     slots_simple.drop('LateDayNum', axis=1, inplace=True)
     slots_simple = slots_simple.set_index(['Seed', 'GameRound'])
@@ -116,11 +117,12 @@ def fnScore(base, x_features, scorer='chalk', seed=42):
     """
     docstring
     """
+    base_path = os.path.dirname(os.getcwd())
 
     # ToDo - Split for simple scoring method?
 
     ## READ FEATURE DICT
-    columns_key = getFeatureDict(pd.read_csv('{}/mmml/mmml/feature_list2.csv'.format(os.path.dirname(os.getcwd()))))
+    columns_key = getFeatureDict(pd.read_csv('{}/mmml/mmml/feature_list2.csv'.format(base_path)))
 
     #### Get Initial Set of True Results
     true_outcome = base.copy()
@@ -180,12 +182,13 @@ def fnEvaluate(results_df):
         by_round_pts = results_df.query('Season=={}'.format(year)).groupby('GameRound').sum()['Points']
         by_round_results = pd.DataFrame(by_round_pts).merge(pd.DataFrame(by_round_correct / by_round_total), left_index=True, right_index=True).transpose()
 
-        print("{year}: {acc}, {pts}".format(year=year, acc=acc, pts=pts))
         print("")
+        print("{year}: {acc}, {pts}".format(year=year, acc=acc, pts=pts))
         print(by_round_results)
 
 def fnGetBracket(results_df, save):
-    teams = pd.read_csv('{}/MTeams.csv'.format(base_data_path))
+    base_path = os.path.dirname(os.getcwd())
+    teams = pd.read_csv('{}/Data/Raw/{}/MDataFiles_Stage1/MTeams.csv'.format(base_path, data_folder))
 
     merged = results_df.merge(teams, left_on='HTeamID', right_on='TeamID')\
                         .merge(teams, left_on='ATeamID', right_on='TeamID', suffixes=['_H', '_A'])
@@ -194,6 +197,9 @@ def fnGetBracket(results_df, save):
 
     bracket.sort_values(by=['Season', 'GameRound', 'Seed_H'], inplace=True)
 
-    bracket.to_csv('{}/Output/{}.csv'.format(os.path.dirname(os.getcwd()), save))
+    if not os.path.exists('{}/Output'.format(base_path)):
+        os.makedirs('{}/Output'.format(base_path))
+
+    bracket.to_csv('{}/Output/{}.csv'.format(base_path, save))
 
     return bracket

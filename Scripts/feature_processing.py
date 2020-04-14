@@ -6,7 +6,7 @@ from sklearn import preprocessing
 import pickle
 
 sys.path.append('{}/mmml'.format(os.path.dirname(os.getcwd())))
-from mmml.config import base_data_path
+from mmml.config import data_folder
 from mmml.game_results import *
 from mmml.utils import *
 
@@ -20,12 +20,12 @@ def fnScaleFeatures(x_features, scaler=None, save=False):
     :param save: bool, default=False.
     :return: DataFrame, dict, sklearn.preprocessing.MinMaxScaler
     """
-
+    base_path = os.path.dirname(os.getcwd())
     # ToDo - Allow ability to read in path to Pickle
 
     # Read Feature Data Dictionary
     # ToDo - clean up and remove the 2
-    feature_list = pd.read_csv('{}/mmml/mmml/feature_list2.csv'.format(os.path.dirname(os.getcwd())))
+    feature_list = pd.read_csv('{}/mmml/mmml/feature_list2.csv'.format(base_path))
     columns_key = getFeatureDict(feature_list)
     scale_cols = columns_key['scale_cols']
     scale_cols = list(set([x[:-2] for x in scale_cols])) # Remove _H / _A suffixes
@@ -37,17 +37,14 @@ def fnScaleFeatures(x_features, scaler=None, save=False):
         logging.info("Fitting Min-Max Scaler")
         min_max_scaler = preprocessing.MinMaxScaler()
         fitted_scaler = min_max_scaler.fit(pd.DataFrame(x_features[scale_cols]))
+
         # Save Min-Max Scaler
-        with open("{}/Model_Objects/fitted_scaler.pkl".format(os.path.dirname(os.getcwd())), 'wb') as file:
-            pickle.dump(fitted_scaler, file)
+        saveResults(object=fitted_scaler, dir='Model_Objects', file_name='fitted_scaler.pkl')
+
     else:
         logging.info("Using Min-Max Scaler passed as argument")
         fitted_scaler = scaler
-        # ToDo - Accomodate Path
-        # Handle Scaler
-        # if type(scaler) == preprocessing.data.MinMaxScaler:
-        #     logging.info("Using Min-Max Scaler passed as argument")
-        #     fitted_scaler = scaler
+        # ToDo - Accomodate path to saved scaler
 
     # Transform DF
     scaled_df = pd.DataFrame(fitted_scaler.transform(x_features[scale_cols]),
@@ -60,6 +57,6 @@ def fnScaleFeatures(x_features, scaler=None, save=False):
     scaled_x_features = x_features.merge(avg_rank, left_index=True, right_index=True)
 
     # Save to Pickle
-    scaled_x_features.to_pickle('{}/Data/Processed/{}.pkl'.format(os.path.dirname(os.getcwd()), save))
+    saveResults(object=scaled_x_features, dir='Data/Processed', file_name='{}.pkl'.format(save))
 
     return scaled_x_features, fitted_scaler

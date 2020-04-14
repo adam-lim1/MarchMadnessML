@@ -7,7 +7,7 @@ import xgboost as xgb
 import pickle
 
 sys.path.append('{}/mmml'.format(os.path.dirname(os.getcwd())))
-from mmml.config import base_data_path
+from mmml.config import data_folder
 from mmml.game_results import *
 from mmml.utils import *
 
@@ -41,22 +41,11 @@ def fnTrain(base, x_features, seed=96, save=False):
     :param save: bool, default=False.
     :return: sklearn.model_selection._search.GridSearchCV, double, double
     """
+    base_path = os.path.dirname(os.getcwd())
 
     ## READ FEATURE DICT
     logging.info("Reading feature dictionary...")
-    # feature_list = pd.read_csv('{}/mmml/mmml/feature_list2.csv'.format(os.path.dirname(os.getcwd())))
-    # diff_cols = list(feature_list.query('Diff_Calc==True')['Name'])
-    # model_target = list(feature_list.query('Type=="Target" and Include==True')['Name'])
-    # model_features = list(feature_list.query('Type=="Feature" and Include==True')['Name'])
-    # model_ids = list(feature_list.query('Type=="ID"')['Name'])
-    #
-    # columns_key = {}
-    # columns_key['target'] = model_target # ToDo - error handle if more than one entry
-    # columns_key['features'] = model_features
-    # columns_key['ids'] = model_ids
-    # columns_key['diff_cols'] = diff_cols
-
-    columns_key = getFeatureDict(pd.read_csv('{}/mmml/mmml/feature_list2.csv'.format(os.path.dirname(os.getcwd()))))
+    columns_key = getFeatureDict(pd.read_csv('{}/mmml/mmml/feature_list2.csv'.format(base_path)))
 
     logging.info("Creating model data...")
     model_data = createModelData(base, x_features, columns_key)
@@ -67,7 +56,6 @@ def fnTrain(base, x_features, seed=96, save=False):
     model_data_reverse = createModelData(base_reverse, x_features, columns_key)
 
     model_data_all = model_data.append(model_data_reverse)
-
 
     logging.info("Defining hyperparam grid...")
     parameters = {'max_depth': [3, 4, 5],
@@ -107,15 +95,6 @@ def fnTrain(base, x_features, seed=96, save=False):
 
     # Save to Pickle
     if save != False:
-        if type(save) != bool:
-            with open("{}/Model_Objects/{}.pkl".format(os.path.dirname(os.getcwd()), save), 'wb') as file:
-                    pickle.dump(model, file)
-
-            logging.info("Model data saved to: {}/Model_Objects/{}.pkl".format(os.path.dirname(os.getcwd()), save))
-        else:
-            with open("{}/Model_Objects/clf.pkl".format(os.path.dirname(os.getcwd())), 'wb') as file:
-                    pickle.dump(model, file)
-
-            logging.info("Model data saved to: {}/Model_Objects/clf.pkl".format(os.path.dirname(os.getcwd())))
+        saveResults(object=model, dir='Model_Objects', file_name='{}.pkl'.format(save))
 
     return model

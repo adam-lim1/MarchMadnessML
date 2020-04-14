@@ -4,7 +4,6 @@ import os
 import logging
 
 sys.path.append('{}/mmml'.format(os.path.dirname(os.getcwd())))
-from mmml.config import base_data_path
 
 from data_prep import fnDataPrep
 from split_data import fnSplitData
@@ -15,7 +14,7 @@ from score import fnScore, fnEvaluate, fnGetBracket
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
 logging.info("###################### ENTERING DATA PREP ######################")
-x_features, base = fnDataPrep(base_data_path, save=True)
+x_features, base = fnDataPrep(save=True)
 
 logging.info("###################### ENTERING TEST/TRAIN SPLIT ######################")
 x_features_dev, x_features_oot = fnSplitData(x_features, save='x_features')
