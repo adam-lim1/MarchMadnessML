@@ -3,6 +3,29 @@ import logging
 import os
 import pickle
 
+def setupLogger(name=__name__, level=logging.INFO, output_file=None):
+    # Initiate Logger
+    logger = logging.getLogger(name)
+
+    logger.setLevel(level)
+
+    formatter = logging.Formatter('%(asctime)s : %(name)s : %(levelname)s - %(message)s')
+    # fhandler.setFormatter(formatter)
+
+    # Set Handlers
+    shandler = logging.StreamHandler()
+    logger.addHandler(shandler)
+    shandler.setFormatter(formatter)
+
+    # If output_file is None, log to stream only; otherwise log to file
+    if output_file is not None:
+        fhandler = logging.FileHandler(filename=output_file, mode='a')
+        logger.addHandler(fhandler)
+        fhandler.setFormatter(formatter)
+
+    return logger
+
+
 def saveResults(object, dir, file_name):
     """
     Save results of object as pickle, creating dir if doesn't already exist
@@ -13,14 +36,14 @@ def saveResults(object, dir, file_name):
 
     # Create directory if doesn't exist
     if not os.path.exists(os.path.join(base_path, dir)):
-        logging.info("Creating directory: {}".format(os.path.join(base_path, dir)))
+        # logging.info("Creating directory: {}".format(os.path.join(base_path, dir)))
         os.makedirs(os.path.join(base_path, dir))
 
     if isinstance(object, pd.DataFrame): # If DataFrame
-        logging.info("Writing object to Pickle: {}".format(os.path.join(base_path, dir, file_name)))
+        # logging.info("Writing object to Pickle: {}".format(os.path.join(base_path, dir, file_name)))
         object.to_pickle(os.path.join(base_path, dir, file_name))
     else: # If Dict/model object
-        logging.info("Writing object to Pickle: {}".format(os.path.join(base_path, dir, file_name)))
+        # logging.info("Writing object to Pickle: {}".format(os.path.join(base_path, dir, file_name)))
         with open(os.path.join(base_path, dir, file_name), 'wb') as file:
             pickle.dump(object, file)
 
@@ -56,17 +79,17 @@ def createModelData(base, x_features, columns_key):
     """
 
     ##### 1. Merge Base and X Features
-    logging.info("Merging base and x features...")
+    # logging.info("Merging base and x features...")
     model_data = base.merge(x_features, left_on=['HTeamID', 'Season'], right_index=True)\
                     .merge(x_features, left_on=['ATeamID', 'Season'], right_index=True, suffixes=['_H', '_A'])
 
     ## Create Diff Cols
-    logging.info("Creating diff cols...")
+    # logging.info("Creating diff cols...")
     for x in columns_key['diff_cols']:
         model_data[x] = model_data[x.replace('_diff', '_H')] - model_data[x.replace('_diff', '_A')]
 
     ## Create Target #ToDo - Make this not hardcoded
-    logging.info("Creating target...")
+    # logging.info("Creating target...")
     try:
         model_data['HScore_diff'] = model_data['HScore'] - model_data['AScore']
     except:

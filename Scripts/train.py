@@ -7,11 +7,11 @@ import xgboost as xgb
 import pickle
 
 sys.path.append('{}/mmml'.format(os.path.dirname(os.getcwd())))
-from mmml.config import data_folder
+from mmml.config import data_folder, log_location
 from mmml.game_results import *
 from mmml.utils import *
 
-logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
+logger = setupLogger(name=__name__, output_file=log_location)
 
 def reverse_base(base):
     """
@@ -53,10 +53,10 @@ def fnTrain(base, x_features, seed=96, save=False):
     base_path = os.path.dirname(os.getcwd())
 
     ## READ FEATURE DICT
-    logging.info("Reading feature dictionary...")
+    logger.info("Reading feature dictionary...")
     columns_key = getFeatureDict(pd.read_csv('{}/mmml/mmml/feature_list2.csv'.format(base_path)))
 
-    logging.info("Creating model data...")
+    logger.info("Creating model data...")
     model_data = createModelData(base, x_features, columns_key)
 
     # Reverse H/A notations on base dataset
@@ -66,7 +66,7 @@ def fnTrain(base, x_features, seed=96, save=False):
 
     model_data_all = model_data.append(model_data_reverse)
 
-    logging.info("Defining hyperparam grid...")
+    logger.info("Defining hyperparam grid...")
     parameters = {'max_depth': [3, 4, 5],
     'learning_rate':[0.1],
     'n_estimators': [10, 100, 1000], #number of trees, change it to 1000 for better results
@@ -78,20 +78,20 @@ def fnTrain(base, x_features, seed=96, save=False):
     clf = GridSearchCV(xgb_model, parameters, n_jobs=5, cv=5, verbose=0, refit=True)
 
     # Define features to use
-    logging.info("Training target: {}".format(columns_key['target']))
-    logging.info("Using Features: {}".format(columns_key['features']))
+    logger.info("Training target: {}".format(columns_key['target']))
+    logger.info("Using Features: {}".format(columns_key['features']))
 
     # Fit Model
-    logging.info("Fitting model...")
+    logger.info("Fitting model...")
     clf.fit(model_data_all[columns_key['features']], model_data_all[columns_key['target']])
 
-    logging.info("Best estimator:")
+    logger.info("Best estimator:")
     print(clf.best_estimator_)
 
-    logging.info("Best score:")
+    logger.info("Best score:")
     print(clf.best_score_)
 
-    logging.info("Feature importance:")
+    logger.info("Feature importance:")
     print(pd.DataFrame(columns_key['features'], columns=['feature'])\
     .merge(pd.DataFrame(clf.best_estimator_.feature_importances_), left_index=True, right_index=True)\
     .sort_values(0, ascending=False))

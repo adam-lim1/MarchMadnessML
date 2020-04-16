@@ -6,11 +6,11 @@ from sklearn import preprocessing
 import pickle
 
 sys.path.append('{}/mmml'.format(os.path.dirname(os.getcwd())))
-from mmml.config import data_folder
+from mmml.config import data_folder, log_location
 from mmml.game_results import *
 from mmml.utils import *
 
-#logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
+logger = setupLogger(name=__name__, output_file=log_location)
 
 def fnScaleFeatures(x_features, scaler=None, save=False):
     """
@@ -37,7 +37,7 @@ def fnScaleFeatures(x_features, scaler=None, save=False):
 
     # Fit Scaler
     if scaler is None:
-        logging.info("Fitting Min-Max Scaler")
+        logger.info("Fitting Min-Max Scaler")
         min_max_scaler = preprocessing.MinMaxScaler()
         fitted_scaler = min_max_scaler.fit(pd.DataFrame(x_features[scale_cols]))
 
@@ -45,7 +45,7 @@ def fnScaleFeatures(x_features, scaler=None, save=False):
         saveResults(object=fitted_scaler, dir='Model_Objects', file_name='fitted_scaler.pkl')
 
     else:
-        logging.info("Using Min-Max Scaler passed as argument")
+        logger.info("Using Min-Max Scaler passed as argument")
         fitted_scaler = scaler
         # ToDo - Accomodate path to saved scaler
 
@@ -54,7 +54,7 @@ def fnScaleFeatures(x_features, scaler=None, save=False):
     columns=[x+"_scaled" for x in scale_cols], index=x_features.index)
 
     # Average of scaled columns
-    logging.info("Creating average ranking of Massey columns")
+    logger.info("Creating average ranking of Massey columns")
     avg_rank = pd.DataFrame(scaled_df[[x+"_scaled" for x in scale_cols]].mean(axis=1), columns=['Avg_Rank'])
 
     scaled_x_features = x_features.merge(avg_rank, left_index=True, right_index=True)

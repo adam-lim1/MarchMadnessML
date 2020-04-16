@@ -4,11 +4,11 @@ import os
 import logging
 
 sys.path.append('{}/mmml'.format(os.path.dirname(os.getcwd())))
-from mmml.config import data_folder
+from mmml.config import data_folder, log_location
 from mmml.game_results import *
 from mmml.utils import *
 
-logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
+logger = setupLogger(name=__name__, output_file=log_location)
 
 def fnDataPrep(save=False):
     """
@@ -28,20 +28,20 @@ def fnDataPrep(save=False):
     reg_results_df = pd.read_csv('{}/Data/Raw/{}/MDataFiles_Stage1/MRegularSeasonDetailedResults.csv'.format(base_path, data_folder))
     season_results = gameResults(reg_results_df)
 
-    logging.info("Aggregating regular season stats...")
+    logger.info("Aggregating regular season stats...")
     season_stats = season_results.getSeasonStats()
 
-    logging.info("Calculating regular season ELO's...")
+    logger.info("Calculating regular season ELO's...")
     elo = season_results.getElo()
 
-    logging.info("Getting end of season Massey Rankings...")
+    logger.info("Getting end of season Massey Rankings...")
     massey = pd.read_csv('{}/Data/Raw/{}/MDataFiles_Stage1/MMasseyOrdinals.csv'.format(base_path, data_folder))
     massey_final = massey.query('RankingDayNum == 133').copy()
     massey_final = massey_final.set_index(['TeamID','Season']).query('SystemName in ["POM", "SAG", "MOR"]') # "LMC", "EBP"
     massey_final = massey_final.drop('RankingDayNum', axis=1)
     massey_final = massey_final.pivot(columns='SystemName')['OrdinalRank']
 
-    logging.info("Merging independent features...")
+    logger.info("Merging independent features...")
     x_features = season_stats.merge(elo, left_index=True, right_index=True)\
                             .merge(massey_final, left_index=True, right_index=True)
 
@@ -50,7 +50,7 @@ def fnDataPrep(save=False):
         saveResults(object=x_features, dir='Data/Processed/', file_name='x_features.pkl')
 
     ## Part 2 - Create Base
-    logging.info("Creating base of past tournament games...")
+    logger.info("Creating base of past tournament games...")
     t_results_df = pd.read_csv('{}/Data/Raw/{}/MDataFiles_Stage1/MNCAATourneyDetailedResults.csv'.format(base_path, data_folder))
     t_results = gameResults(t_results_df)
     base = t_results.getBase()

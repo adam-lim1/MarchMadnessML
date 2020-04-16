@@ -8,11 +8,11 @@ import pickle
 from scipy.stats import norm
 
 sys.path.append('{}/mmml'.format(os.path.dirname(os.getcwd())))
-from mmml.config import data_folder
+from mmml.config import data_folder, log_location
 from mmml.game_results import *
 from mmml.utils import *
 
-logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
+logger = setupLogger(name=__name__, output_file=log_location)
 
 ### HELPERS FOR CHALK PREDICTION ALG
 def getNumericSeed(seed):
@@ -163,7 +163,7 @@ def fnScore(base, x_features, scorer='chalk', seed=42):
 
     #### Score each round and create next round matchups
     for round_num in range(1,7):
-        logging.info("Getting predictions for Round {}...".format(round_num))
+        logger.info("Getting predictions for Round {}...".format(round_num))
         base_r, pred_r0 = score_round(round_dict[round_num]['base'], x_features, columns_key, scorer=scorer)
 
         round_dict[round_num]['pred'] = pred_r0
@@ -172,7 +172,7 @@ def fnScore(base, x_features, scorer='chalk', seed=42):
             round_dict[round_num+1]['base'] = base_r
 
     #### CREATE OVERALL RESULTS DF
-    logging.info("Creating DataFrame of all results...")
+    logger.info("Creating DataFrame of all results...")
     results_df = round_dict[1]['pred']
 
     for i in range(2,7):
