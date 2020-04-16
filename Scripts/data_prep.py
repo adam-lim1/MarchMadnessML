@@ -12,10 +12,15 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=loggin
 
 def fnDataPrep(save=False):
     """
-    Create base dataset for modeling from: Historical tournament matchups, tournament seeds/slots,
-    season-aggregated regular season results, and Massey rankings. Transforms data from W/L
-    orientation to Home/Away.
+    Create base datsets for modeling. Creates a dataset of X (independent) features
+    and a base dataset of historical tournament matchups.
 
+    For X features, calculates and aggregates regular season aggregate stats,
+    ELO, Massey rankings. For Base matchups, appends seed and tournament slot info.
+    Transforms W/L format to Home/Away.
+
+    :param save: bool, default=False. Indicate whether to cache base and x_features dataframes
+    :return: DataFrame of X features, DataFrame of base matchups
     """
 
     base_path = os.path.dirname(os.getcwd())

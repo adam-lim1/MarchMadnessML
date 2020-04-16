@@ -4,6 +4,9 @@ import os
 import pickle
 
 def saveResults(object, dir, file_name):
+    """
+    Save results of object as pickle, creating dir if doesn't already exist
+    """
     base_path = os.path.dirname(os.getcwd())
 
     print(os.path.join(base_path, dir, file_name))
@@ -13,10 +16,10 @@ def saveResults(object, dir, file_name):
         logging.info("Creating directory: {}".format(os.path.join(base_path, dir)))
         os.makedirs(os.path.join(base_path, dir))
 
-    if isinstance(object, pd.DataFrame):
+    if isinstance(object, pd.DataFrame): # If DataFrame
         logging.info("Writing object to Pickle: {}".format(os.path.join(base_path, dir, file_name)))
         object.to_pickle(os.path.join(base_path, dir, file_name))
-    else:
+    else: # If Dict/model object
         logging.info("Writing object to Pickle: {}".format(os.path.join(base_path, dir, file_name)))
         with open(os.path.join(base_path, dir, file_name), 'wb') as file:
             pickle.dump(object, file)
@@ -24,6 +27,9 @@ def saveResults(object, dir, file_name):
     return 1
 
 def getFeatureDict(feature_list):
+    """
+    Given DF of feature information, parse into dictionary
+    """
     #feature_list = pd.read_csv('{}/mmml/mmml/feature_list2.csv'.format(os.path.dirname(os.getcwd())))
     diff_cols = list(feature_list.query('Diff_Calc==True')['Name'])
     scale_cols = list(feature_list.query('Scale_Avg == True')['Name'])
@@ -41,6 +47,14 @@ def getFeatureDict(feature_list):
     return columns_key
 
 def createModelData(base, x_features, columns_key):
+    """
+    Helper function to merge a base of game matchups and historical x-features
+    for each team. Creates diff columns between _H/_A features. Also creates
+    target of H - A score differential.
+
+    Returns df of ID columns, target column, and feature columns
+    """
+
     ##### 1. Merge Base and X Features
     logging.info("Merging base and x features...")
     model_data = base.merge(x_features, left_on=['HTeamID', 'Season'], right_index=True)\

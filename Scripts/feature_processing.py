@@ -14,11 +14,14 @@ from mmml.utils import *
 
 def fnScaleFeatures(x_features, scaler=None, save=False):
     """
+    Fits a MinMaxScaler to development data or applies scaler to OOT data. Also creates
+    an "Average Rank" column representing the average of all scaled column values.
+    This should be applied on Massey ranks to create a single signal.
 
-    :param model_data: DataFrame.
-    :param scaler: sklearn.preprocessing.MinMaxScaler, default=None.
-    :param save: bool, default=False.
-    :return: DataFrame, dict, sklearn.preprocessing.MinMaxScaler
+    :param x_features: DataFrame to scale
+    :param scaler: Optional. Pre-fit sklearn.preprocessing.MinMaxScaler to transform data with
+    :param save: default=False. String value specifies file name to save transformed DF as
+    :return: transformed DataFrame, fitted sklearn.preprocessing.MinMaxScaler scaler
     """
     base_path = os.path.dirname(os.getcwd())
     # ToDo - Allow ability to read in path to Pickle
@@ -57,6 +60,7 @@ def fnScaleFeatures(x_features, scaler=None, save=False):
     scaled_x_features = x_features.merge(avg_rank, left_index=True, right_index=True)
 
     # Save to Pickle
-    saveResults(object=scaled_x_features, dir='Data/Processed', file_name='{}.pkl'.format(save))
+    if save!=False:
+        saveResults(object=scaled_x_features, dir='Data/Processed', file_name='{}.pkl'.format(save))
 
     return scaled_x_features, fitted_scaler

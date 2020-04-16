@@ -14,6 +14,11 @@ from mmml.utils import *
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
 def reverse_base(base):
+    """
+    HELPER FUNCTION
+    Reverses H/A orientation for a base DataFrame of matchups. Employed to
+    effictively double size of training set and produce more symmetrical predictions.
+    """
     reverse_base = base.copy()
     reverse_base = reverse_base.rename(columns={'HTeamID': 'ATeamID_2',
                                                 'ATeamID':'HTeamID_2',
@@ -34,12 +39,16 @@ def reverse_base(base):
 
 def fnTrain(base, x_features, seed=96, save=False):
     """
+    Trains XGBoost Regression on set of base matchups. Utilizes a CV grid search
+    across possible hyperparameters.
 
-    :param model_data: DataFrame.
-    :param column_dict: dict.
-    :param seed: int, default=96.
-    :param save: bool, default=False.
-    :return: sklearn.model_selection._search.GridSearchCV, double, double
+    Regression predicts difference in score from the home and away teams in the
+    matchup (Home Score - Away Score). Combined with the mean and std deviation
+    from the training set, we can transform the predicted difference in score to
+    a probability that the Home team will win.
+
+    Output is a dict with the fitted clf, mean target value from training set,
+    and standard deviation of target values from the training set.
     """
     base_path = os.path.dirname(os.getcwd())
 

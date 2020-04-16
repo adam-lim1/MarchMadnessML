@@ -17,7 +17,8 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=loggin
 ### HELPERS FOR CHALK PREDICTION ALG
 def getNumericSeed(seed):
     """
-    Helper function for convering Region/Seed into strictly numeric value
+    HELPER FUNCTION
+    Convert Region/Seed into strictly numeric seed value
     Example: 'W01' -> 1
     """
     seed = seed[1:]
@@ -29,8 +30,11 @@ def getNumericSeed(seed):
 
 def chalk_predictions(df, seed=42):
     """
-    Baseline prediciton algorithm. Predict higher seeds will win every time
-    Output = DF with Pred and Prob columns, indexed by input DF.
+    HELPER FUNCTION
+    Baseline prediciton algorithm. Predict higher seeds will win every time.
+    If both teams seeds are equal, choose winner based on random value
+
+    :output: DF with Pred and Prob columns, indexed by input DF index.
     """
     score_df = df.copy()
 
@@ -52,8 +56,13 @@ def chalk_predictions(df, seed=42):
 
 def model_predictions(df, model, features):
     """
-    Helper to score dataframe
-    Output = DF with Pred and Prob columns, indexed by input DF.
+    HELPER FUNCTION
+    Score dataframe with fitted sklearn classifier.
+
+    :param df: DF (combined base and x_features) to score
+    :param model: dict of clf, mean target, std target to score/transform df with
+    :param features: list of features to pass to classifier
+    :output: DF with Pred and Prob columns, indexed by input DF index
     """
     # Produce Scores
     y_pred = model['clf'].predict(df[features])
@@ -67,7 +76,19 @@ def model_predictions(df, model, features):
 
 def score_round(matchups_r1, x_features, columns_key, scorer='chalk', seed=42):
     """
-    Score matchups for round n and create matchups for round n+1
+    HELPER FUNCTION
+    Sub-function to score matchups for round n and produce matchups for round
+    n+1 based on predicted winners from n. Allows for a scoring assessment
+    replicating better real-life process (rather than straight accuracy on known
+    games).
+
+    :param matchups_r1: DF of H/A matchups for tourmanent round
+    :param x_features: DF of x_features
+    :param columns_key: Dict containing feature columns to pass to classifier
+    :param scorer: default = 'chalk'. Scoring algorithm to use. chalk=chalk_predictions scorer
+    Otherwise, must pass a model dict containing clf, mean of target, std of target
+    :param seed: Seed to use in chalk scoring function
+    :output: DF with base matchups for round n+1, DF with predicted outcomes for round n
     """
     base_path = os.path.dirname(os.getcwd())
     # Merge Current Round Matchups with X_Features
@@ -115,7 +136,14 @@ def score_round(matchups_r1, x_features, columns_key, scorer='chalk', seed=42):
 
 def fnScore(base, x_features, scorer='chalk', seed=42):
     """
-    docstring
+    Produces true tournament predictions where the preditions for each round are
+    conditional on the predictions from the prior round.
+
+    Chalk scorer produces baseline score if were to pick the higher seed every game.
+    Fitted models can be evaluated by passing a model dict to the scoring input.
+
+    Output is a dict with each round's matchups and predictions and a DF with all
+    round predictions combined together.
     """
     base_path = os.path.dirname(os.getcwd())
 
@@ -153,26 +181,33 @@ def fnScore(base, x_features, scorer='chalk', seed=42):
     results_df = results_df.merge(true_outcome, left_on=['Season', 'GameRound', 'GameSlot'], right_on=['Season', 'GameRound', 'GameSlot'], how='left')
 
     #### SCORE VS TRUE RESULTS
-    logging.info("Scoring...")
+    # logging.info("Scoring...")
 
     # Flag if prediction correct
-    results_df['Correct'] = np.where(results_df['WTeamID_true'] == results_df['WTeamID_pred'], 1, 0)
+    # results_df['Correct'] = np.where(results_df['WTeamID_true'] == results_df['WTeamID_pred'], 1, 0)
 
     # Convert results to ESPN type score
-    points_dict = {1:10, 2:20, 3:40, 4:80, 5:160, 6:320}
-    results_df['Points'] = np.where(results_df['Correct']==1, results_df['GameRound'].apply(lambda x: points_dict[x]), 0)
+    # points_dict = {1:10, 2:20, 3:40, 4:80, 5:160, 6:320}
+    # results_df['Points'] = np.where(results_df['Correct']==1, results_df['GameRound'].apply(lambda x: points_dict[x]), 0)
 
     return round_dict, results_df
 
 def fnEvaluate(results_df):
+    """
+    Given DF of predictions of historical games, calculate overall accuracy and
+    ESPN style bracket points, printing results both overall and by round
+    """
+    # Create Flag if prediction correct
     results_df['Correct'] = np.where(results_df['WTeamID_true'] == results_df['WTeamID_pred'], 1, 0)
 
+    # GameRound: Point value from ESPN bracket challenge
     points_dict = {1:10, 2:20, 3:40, 4:80, 5:160, 6:320}
     results_df['Points'] = np.where(results_df['Correct']==1, results_df['GameRound'].apply(lambda x: points_dict[x]), 0)
 
     year_list = list(set(results_df['Season']))
     year_list.sort()
 
+    # Results for each year
     for year in year_list:
         acc = results_df.query('Season=={}'.format(year))['Correct'].sum() / results_df.query('Season=={}'.format(year))['Correct'].count()
         pts = results_df.query('Season=={}'.format(year))['Points'].sum()
@@ -186,10 +221,14 @@ def fnEvaluate(results_df):
         print("{year}: {acc}, {pts}".format(year=year, acc=acc, pts=pts))
         print(by_round_results)
 
-def fnGetBracket(results_df, save):
+def fnGetBracket(results_df, save=False):
+    """
+    Given DF of predictions, produce CSV of matchups and predictions
+    """
     base_path = os.path.dirname(os.getcwd())
-    teams = pd.read_csv('{}/Data/Raw/{}/MDataFiles_Stage1/MTeams.csv'.format(base_path, data_folder))
 
+    # Append Team name information
+    teams = pd.read_csv('{}/Data/Raw/{}/MDataFiles_Stage1/MTeams.csv'.format(base_path, data_folder))
     merged = results_df.merge(teams, left_on='HTeamID', right_on='TeamID')\
                         .merge(teams, left_on='ATeamID', right_on='TeamID', suffixes=['_H', '_A'])
 
@@ -197,9 +236,11 @@ def fnGetBracket(results_df, save):
 
     bracket.sort_values(by=['Season', 'GameRound', 'Seed_H'], inplace=True)
 
-    if not os.path.exists('{}/Output'.format(base_path)):
-        os.makedirs('{}/Output'.format(base_path))
+    # Save to CSV
+    if save != False:
+        if not os.path.exists('{}/Output'.format(base_path)):
+            os.makedirs('{}/Output'.format(base_path))
 
-    bracket.to_csv('{}/Output/{}.csv'.format(base_path, save))
+        bracket.to_csv('{}/Output/{}.csv'.format(base_path, save))
 
     return bracket

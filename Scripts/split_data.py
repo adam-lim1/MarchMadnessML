@@ -12,9 +12,12 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=loggin
 
 def fnSplitData(data_all, save=False):
     """
-    :param model_data: DataFrame.
-    :param save: bool, default=False.
-    :return: DataFrame, DataFrame
+    Splits data into development and out of time sets based on oot_years value specified
+    in config file.
+
+    :param data_all: original DataFrame to split
+    :param save: default=False. String value specifies file name to save split DF as
+    :return: development DataFrame, OOT DataFrame
     """
 
     logging.info("Splitting data into Development and OOT sets...")
