@@ -30,16 +30,16 @@ logger.info("###################### ENTERING MODEL TRAINING ####################
 model = fnTrain(base_dev, scaled_x_features_dev, seed=96, save='xgboost_regression_reverse')
 
 logger.info("###################### ENTERING MODEL SCORING ######################")
-_, results_df_chalk = fnScore(base_oot, scaled_x_features_oot, scorer='chalk', seed=42)
+_, results_df_chalk = fnScore(base_oot, scaled_x_features_oot, scorer='chalk', seed=69)
 _, results_df_model = fnScore(base_oot, scaled_x_features_oot, scorer=model)
 
 logger.info("Evaluating chalk predictions: (Year: Overall Accuracy, ESPN Bracket Pts)")
-fnEvaluate(results_df_chalk)
+_ = fnEvaluate(results_df_chalk)
 
 logger.info("Evaluating model predictions: (Year: Overall Accuracy, ESPN Bracket Pts)")
-fnEvaluate(results_df_model)
+_ = fnEvaluate(results_df_model)
 
-bracket = fnGetBracket(results_df_model.query('Season==2019'), save='2019_bracket_predictions')
-print(bracket.head())
+bracket = fnGetBracket(results_df_model.query('Season==2018'), save='2018_bracket_predictions')
+logger.info("{}".format(bracket.head()))
 
 logger.info("done")

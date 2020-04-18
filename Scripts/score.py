@@ -164,7 +164,7 @@ def fnScore(base, x_features, scorer='chalk', seed=42):
     #### Score each round and create next round matchups
     for round_num in range(1,7):
         logger.info("Getting predictions for Round {}...".format(round_num))
-        base_r, pred_r0 = score_round(round_dict[round_num]['base'], x_features, columns_key, scorer=scorer)
+        base_r, pred_r0 = score_round(round_dict[round_num]['base'], x_features, columns_key, scorer=scorer, seed=seed)
 
         round_dict[round_num]['pred'] = pred_r0
 
@@ -208,7 +208,8 @@ def fnEvaluate(results_df):
     year_list.sort()
 
     # Results for each year
-    for year in year_list:
+    results_dict = {}
+    for year in year_list: # for year in year_list:
         acc = results_df.query('Season=={}'.format(year))['Correct'].sum() / results_df.query('Season=={}'.format(year))['Correct'].count()
         pts = results_df.query('Season=={}'.format(year))['Points'].sum()
 
@@ -217,9 +218,11 @@ def fnEvaluate(results_df):
         by_round_pts = results_df.query('Season=={}'.format(year)).groupby('GameRound').sum()['Points']
         by_round_results = pd.DataFrame(by_round_pts).merge(pd.DataFrame(by_round_correct / by_round_total), left_index=True, right_index=True).transpose()
 
-        print("")
-        print("{year}: {acc}, {pts}".format(year=year, acc=acc, pts=pts))
-        print(by_round_results)
+        # print("")
+        logger.info("{year}: {acc}, {pts}".format(year=year, acc=acc, pts=pts))
+        logger.info("\n {}".format(by_round_results))
+        results_dict[year] = {'acc':acc, 'pts':pts}
+    return results_dict
 
 def fnGetBracket(results_df, save=False):
     """
