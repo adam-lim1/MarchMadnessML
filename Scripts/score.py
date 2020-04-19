@@ -220,7 +220,7 @@ def fnEvaluate(results_df):
 
         # print("")
         logger.info("{year}: {acc}, {pts}".format(year=year, acc=acc, pts=pts))
-        logger.info("\n {}".format(by_round_results))
+        logger.info("\n {} \n".format(by_round_results))
         results_dict[year] = {'acc':acc, 'pts':pts}
     return results_dict
 

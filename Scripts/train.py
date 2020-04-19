@@ -86,15 +86,16 @@ def fnTrain(base, x_features, seed=96, save=False):
     clf.fit(model_data_all[columns_key['features']], model_data_all[columns_key['target']])
 
     logger.info("Best estimator:")
-    print(clf.best_estimator_)
+    logger.info("{}".format(clf.best_estimator_))
 
     logger.info("Best score:")
-    print(clf.best_score_)
+    logger.info("{}".format(clf.best_score_))
 
     logger.info("Feature importance:")
-    print(pd.DataFrame(columns_key['features'], columns=['feature'])\
+    feature_importance = pd.DataFrame(columns_key['features'], columns=['feature'])\
     .merge(pd.DataFrame(clf.best_estimator_.feature_importances_), left_index=True, right_index=True)\
-    .sort_values(0, ascending=False))
+    .sort_values(0, ascending=False)
+    logger.info("{}".format(feature_importance))
 
     # Define Normal Distribution Parameters
     model = {}

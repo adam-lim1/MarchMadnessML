@@ -39,7 +39,8 @@ _ = fnEvaluate(results_df_chalk)
 logger.info("Evaluating model predictions: (Year: Overall Accuracy, ESPN Bracket Pts)")
 _ = fnEvaluate(results_df_model)
 
-bracket = fnGetBracket(results_df_model.query('Season==2018'), save='2018_bracket_predictions')
+logger.info("Rendering full bracket predictions...")
+bracket = fnGetBracket(results_df_model.query('Season==2019'), save='2019_bracket_predictions')
 logger.info("{}".format(bracket.head()))
 
 logger.info("done")

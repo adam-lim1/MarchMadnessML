@@ -32,7 +32,7 @@ def saveResults(object, dir, file_name):
     """
     base_path = os.path.dirname(os.getcwd())
 
-    print(os.path.join(base_path, dir, file_name))
+    # print(os.path.join(base_path, dir, file_name))
 
     # Create directory if doesn't exist
     if not os.path.exists(os.path.join(base_path, dir)):
