@@ -27,6 +27,7 @@ def fnSplitData(data_all, save=False):
         dev_years = list(set(data_all['Season'].unique()) - set(oot_years))
     except:
         dev_years = list(set([x[1] for x in data_all.index.to_numpy()]) - set(oot_years))
+    dev_years = [x for x in dev_years if x != 2020] # Do not use 2020 data due to COVID-19 disruption
 
     dev_years.sort()
     logger.info("Dev seasons: {}".format(dev_years))

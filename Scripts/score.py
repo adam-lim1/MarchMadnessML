@@ -8,7 +8,7 @@ import pickle
 from scipy.stats import norm
 
 sys.path.append('{}/mmml'.format(os.path.dirname(os.getcwd())))
-from mmml.config import data_folder, log_location
+from mmml.config import data_folder, log_location, current_season
 from mmml.game_results import *
 from mmml.utils import *
 
@@ -144,6 +144,8 @@ def fnScore(base, x_features, scorer='chalk', seed=42):
 
     Output is a dict with each round's matchups and predictions and a DF with all
     round predictions combined together.
+
+    This will not create scores for the current_season
     """
     base_path = os.path.dirname(os.getcwd())
 
@@ -247,3 +249,68 @@ def fnGetBracket(results_df, save=False):
         bracket.to_csv('{}/Output/{}.csv'.format(base_path, save))
 
     return bracket
+
+def predictCurrentYear(base, x_features, scorer='chalk', seed=42):
+    """
+    Create bracket predictions for current season
+
+    Similar to fnScore but does not require true game outcomes
+    """
+    base_path = os.path.dirname(os.getcwd())
+
+    ## READ FEATURE DICT
+    columns_key = getFeatureDict(pd.read_csv('{}/mmml/mmml/feature_list2.csv'.format(base_path)))
+
+    #### 2021 Workaround: Append first round of games to base
+    slots = pd.read_csv('{}/Data/Raw/{}/MDataFiles_Stage1/MNCAATourneySlots.csv'.format(base_path, data_folder))
+    round_slots = pd.read_csv('{}/Data/Raw/{}/MDataFiles_Stage1/MNCAATourneySeedRoundSlots.csv'.format(base_path, data_folder))
+    seeds = pd.read_csv('{}/Data/Raw/{}/MDataFiles_Stage1/MNCAATourneySeeds.csv'.format(base_path, data_folder))
+
+    seeds_current = seeds.query('Season=={}'.format(current_season))
+    round1_current = slots[slots['Slot'].apply(lambda x: x[0:2] == "R1")==True].query('Season=={}'.format(current_season)) # Identify first round
+    
+    # Temp work around - choose default winner for play in games
+    round1_current = round1_current\
+                        .replace('W11','W11a')\
+                        .replace('W16','W16a')\
+                        .replace('X11','X11a')\
+                        .replace('X16','X16a')
+    # Append team ID's
+    round1_current = round1_current.merge(seeds_current, left_on=['StrongSeed'], right_on=['Seed']).rename(columns={'TeamID':'HTeamID'}).drop('Seed',axis=1)
+    round1_current = round1_current.merge(seeds_current, left_on=['WeakSeed'], right_on=['Seed'], how='left').rename(columns={'TeamID':'ATeamID'}).drop('Seed',axis=1)
+    round1_current = round1_current.rename(columns={'StrongSeed':'Seed_H','WeakSeed':'Seed_A', 'Slot':'GameSlot'})
+
+    round1_current['GameRound'] = 1
+    round1_current['DayNum'] = 999
+    round1_current['HWin'] = 999
+    round1_current['HScore'] = 999
+    round1_current['AScore'] = 999
+    round1_current_format = round1_current[list(base.columns)]
+     
+    # print(round1_current_format)
+    base = round1_current_format.copy()
+
+    #### Create dictionary of base matchups and predictions for each round
+    round_dict = {i:{'base':None,'pred':None} for i in range(1,7)}
+    round_dict[1]={'base':base.query('GameRound==1')}
+
+    #### Score each round and create next round matchups
+    for round_num in range(1,7):
+        logger.info("Getting predictions for Round {}...".format(round_num))
+        base_r, pred_r0 = score_round(round_dict[round_num]['base'], x_features, columns_key, scorer=scorer, seed=seed)
+
+        round_dict[round_num]['pred'] = pred_r0
+
+        if round_num != 6:
+            round_dict[round_num+1]['base'] = base_r
+
+    #### CREATE OVERALL RESULTS DF
+    logger.info("Creating DataFrame of all results...")
+    results_df = round_dict[1]['pred']
+
+    for i in range(2,7):
+        results_df = results_df.append(round_dict[i]['pred'])
+
+    print(results_df)
+
+    return round_dict, results_df

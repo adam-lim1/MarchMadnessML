@@ -11,7 +11,7 @@ from data_prep import fnDataPrep
 from split_data import fnSplitData
 from feature_processing import fnScaleFeatures
 from train import fnTrain
-from score import fnScore, fnEvaluate, fnGetBracket
+from score import fnScore, fnEvaluate, fnGetBracket, predictCurrentYear
 
 logger = setupLogger(name=__name__, output_file=log_location)
 
@@ -39,8 +39,10 @@ _ = fnEvaluate(results_df_chalk)
 logger.info("Evaluating model predictions: (Year: Overall Accuracy, ESPN Bracket Pts)")
 _ = fnEvaluate(results_df_model)
 
-logger.info("Rendering full bracket predictions...")
-bracket = fnGetBracket(results_df_model.query('Season==2019'), save='2019_bracket_predictions')
+logger.info("Creating full bracket predictions for current season...")
+_, results_2021 = predictCurrentYear(base_oot, scaled_x_features_oot, scorer=model)
+bracket = fnGetBracket(results_2021, save='2021_bracket_predictions')
 logger.info("{}".format(bracket.head()))
+logger.info("{}".format(bracket.tail()))
 
 logger.info("done")
